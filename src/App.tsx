@@ -1,25 +1,54 @@
-import React from 'react';
-import logo from './logo.svg';
+import { useEffect, useState } from 'react';
 import './App.css';
-
+import { IPost } from './models/IPost';
+import axios from 'axios'
 function App() {
+
+  const url: string = "https://jsonplaceholder.typicode.com/posts"
+  const defaultPosts: IPost[] = []
+  const [posts, setPosts] = useState<IPost[]>(defaultPosts)
+  const [loading, setLoading]: [boolean, (loading: boolean) => void] = useState<boolean>(true)
+  const [error, setError]: [string, (error: string) => void] = useState("");
+
+  async function getPosts() {
+    return await axios.get<IPost[]>(url, {
+      headers: {
+        'Content-type': 'application/json'
+      },
+      timeout: 1000
+    })
+      .then((response) => {
+        setPosts(response.data)
+        setLoading(false)
+      })
+      .catch((ex) => {
+        const error = ex.response.status === 404 ? "Resource not found" : "An unexpected error has occured";
+        setError(error)
+        setLoading(false)
+      })
+  }
+
+  useEffect(() => {
+    getPosts()
+  }, [])
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <div className='App'>
+        {loading&&<div>Loading...</div>}
+        <ul className='posts'>
+          {posts.map(({ id, title, body }) => (
+            <li key={id}>
+              <h3>{title}</h3>
+              <p>{body}</p>
+            </li>
+          ))}
+
+        </ul>
+        {error && <p className='error'>{error}</p>}
+      </div>
+    </>
+
   );
 }
 
